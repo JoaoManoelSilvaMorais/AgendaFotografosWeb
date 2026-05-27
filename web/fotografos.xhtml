@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    
+    <h:head>
+        <title>Gestão de Fotógrafos</title>
+        <style>
+            /* CSS básico - Estilo aluno aprendendo HTML */
+            body { 
+                font-family: sans-serif; 
+                background-color: #ffffff; 
+                color: #000000;
+                margin: 20px;
+            }
+            .caixa-formulario {
+                border: 1px solid #000000;
+                padding: 15px;
+                margin-bottom: 20px;
+                background-color: #f9f9f9;
+                width: 500px;
+            }
+            .linha-campo {
+                margin-bottom: 10px;
+            }
+            .linha-campo label {
+                font-weight: bold;
+            }
+            .tabela-basica {
+                border-collapse: collapse;
+                width: 80%;
+                margin-top: 15px;
+            }
+            .tabela-basica th, .tabela-basica td {
+                border: 1px solid #000000;
+                padding: 5px;
+                text-align: left;
+            }
+            .tabela-basica th {
+                background-color: #cccccc;
+            }
+            .link-voltar {
+                font-size: 14px;
+                color: #0000ee;
+                margin-bottom: 15px;
+                display: block;
+            }
+            .botao-padrao {
+                background-color: #e0e0e0;
+                border: 1px outset #888888;
+                padding: 4px 10px;
+                cursor: pointer;
+                color: #000000;
+            }
+            .botao-excluir {
+                background-color: #ffcccc;
+                border: 1px solid #cc0000;
+                color: #cc0000;
+                cursor: pointer;
+                font-size: 12px;
+            }
+            /* Mensagens sem caixas coloridas, só o texto */
+            .msg-erro { color: red; font-weight: bold; list-style-type: square; }
+            .msg-info { color: green; font-weight: bold; list-style-type: square; }
+        </style>
+    </h:head>
+    
+    <h:body>
+        <h:link outcome="index" value="[ Voltar para o Menu ]" styleClass="link-voltar" />
+
+        <h2>Cadastro de Fotógrafos</h2>
+        
+        <h:messages globalOnly="true" errorClass="msg-erro" infoClass="msg-info" />
+
+        <div class="caixa-formulario">
+            <h:form id="formCadastro">
+                <div class="linha-campo">
+                    <h:outputLabel for="nome" value="Nome Completo: " /><br/>
+                    <h:inputText id="nome" value="#{fotografoController.fotografo.nomeCompleto}" required="true" requiredMessage="O nome é obrigatório." size="40" />
+                </div>
+                
+                <div class="linha-campo">
+                    <h:outputLabel for="cpf" value="CPF: " /><br/>
+                    <h:inputText id="cpf" value="#{fotografoController.fotografo.cpf}" required="true" requiredMessage="O CPF é obrigatório." size="20" />
+                </div>
+                
+                <div class="linha-campo">
+                    <h:outputLabel for="telefone" value="Telefone: " /><br/>
+                    <h:inputText id="telefone" value="#{fotografoController.fotografo.telefone}" size="20" />
+                </div>
+                
+                <div class="linha-campo">
+                    <h:outputLabel for="data" value="Data de Contratação (dd/mm/aaaa): " /><br/>
+                    <h:inputText id="data" value="#{fotografoController.fotografo.dataContratacao}" required="true" requiredMessage="A data é obrigatória." converter="localDateConverter" size="15" />
+                </div>
+
+                <div class="linha-campo">
+                    <h:commandButton value="Salvar Dados" action="#{fotografoController.salvar}" styleClass="botao-padrao" />
+                </div>
+            </h:form>
+        </div>
+
+        <hr size="1" color="#000000" />
+
+        <h2>Lista de Fotógrafos</h2>
+        
+        <h:form id="formTabela">
+            <h:dataTable value="#{fotografoController.listaFotografos}" var="foto" styleClass="tabela-basica">
+                <h:column>
+                    <f:facet name="header">Código</f:facet>
+                    <h:outputText value="#{foto.id}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Nome</f:facet>
+                    <h:outputText value="#{foto.nomeCompleto}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">CPF</f:facet>
+                    <h:outputText value="#{foto.cpf}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Contratação</f:facet>
+                    <h:outputText value="#{foto.dataContratacao}" converter="localDateConverter" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Ação</f:facet>
+                    <h:commandButton value="Excluir" 
+                                     action="#{fotografoController.excluir(foto)}" 
+                                     styleClass="botao-excluir"
+                                     onclick="return confirm('Apagar este fotografo?');" />
+                </h:column>
+            </h:dataTable>
+        </h:form>
+        
+    </h:body>
+</html>

@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    
+    <h:head>
+        <title>Estoque de Equipamentos</title>
+        <style>
+            /* Estilo "Trabalho de Faculdade" */
+            body { 
+                font-family: sans-serif; 
+                background-color: #ffffff; 
+                color: #000000;
+                margin: 20px;
+            }
+            .quadro-formulario {
+                border: 1px solid #666666;
+                padding: 10px;
+                margin-bottom: 20px;
+                background-color: #eeeeee;
+                width: 450px;
+            }
+            .campo {
+                margin-bottom: 8px;
+            }
+            label {
+                font-weight: bold;
+                font-size: 14px;
+            }
+            .tabela-listagem {
+                border: 1px solid #000000;
+                border-collapse: collapse;
+                width: 90%;
+            }
+            .tabela-listagem th {
+                border: 1px solid #000000;
+                background-color: #dddddd;
+                padding: 4px;
+                text-align: left;
+            }
+            .tabela-listagem td {
+                border: 1px solid #000000;
+                padding: 4px;
+            }
+            .link-menu {
+                color: #0000ee;
+                text-decoration: underline;
+                font-size: 13px;
+            }
+            .btn-gravar {
+                background-color: #f0f0f0;
+                border: 2px outset #cccccc;
+                padding: 3px 15px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .btn-deletar {
+                background-color: #ffffff;
+                border: 1px solid #ff0000;
+                color: #ff0000;
+                font-size: 11px;
+                cursor: pointer;
+            }
+            .aviso-erro { color: #cc0000; font-weight: bold; }
+            .aviso-ok { color: #008800; font-weight: bold; }
+        </style>
+    </h:head>
+    
+    <h:body>
+        <h:link outcome="index" value="[ Voltar ao Menu Principal ]" styleClass="link-menu" />
+        <br/><br/>
+
+        <h2>Controle de Estoque</h2>
+        
+        <h:messages globalOnly="true" errorClass="aviso-erro" infoClass="aviso-ok" />
+
+        <div class="quadro-formulario">
+            <h:form id="formEquipamento">
+                <div class="campo">
+                    <h:outputLabel value="Descrição do Item:" /><br/>
+                    <h:inputText value="#{equipamentoController.equipamento.descricao}" required="true" requiredMessage="Faltou a descrição." size="40" />
+                </div>
+                
+                <div class="campo">
+                    <h:outputLabel value="Tipo de Item:" /><br/>
+                    <h:selectOneMenu value="#{equipamentoController.equipamento.tipo}">
+                        <f:selectItem itemValue="Câmera" itemLabel="Câmera" />
+                        <f:selectItem itemValue="Lente" itemLabel="Lente" />
+                        <f:selectItem itemValue="Iluminação" itemLabel="Iluminação" />
+                        <f:selectItem itemValue="Acessório" itemLabel="Acessório" />
+                    </h:selectOneMenu>
+                </div>
+                
+                <div class="campo">
+                    <h:outputLabel value="Qtd. Comprada:" /><br/>
+                    <h:inputText value="#{equipamentoController.equipamento.quantidadeTotal}" required="true" size="5" />
+                </div>
+                
+                <div class="campo">
+                    <h:commandButton value="Cadastrar no Estoque" action="#{equipamentoController.salvar}" styleClass="btn-gravar" />
+                </div>
+            </h:form>
+        </div>
+
+        <hr />
+
+        <h3>Itens no Inventário</h3>
+        
+        <h:form id="tabelaEstoque">
+            <h:dataTable value="#{equipamentoController.listaEquipamentos}" var="e" styleClass="tabela-listagem">
+                <h:column>
+                    <f:facet name="header">Cód.</f:facet>
+                    <h:outputText value="#{e.id}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Descrição</f:facet>
+                    <h:outputText value="#{e.descricao}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Tipo</f:facet>
+                    <h:outputText value="#{e.tipo}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Total</f:facet>
+                    <h:outputText value="#{e.quantidadeTotal}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Em Uso</f:facet>
+                    <h:outputText value="#{e.quantidadeEmUso}" />
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Livre</f:facet>
+                    <strong><h:outputText value="#{e.quantidadeTotal - e.quantidadeEmUso}" /></strong>
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Opções</f:facet>
+                    <h:commandButton value="remover" 
+                                     action="#{equipamentoController.excluir(e)}" 
+                                     styleClass="btn-deletar"
+                                     onclick="return confirm('Excluir este item do estoque?');" />
+                </h:column>
+            </h:dataTable>
+        </h:form>
+        
+    </h:body>
+</html>

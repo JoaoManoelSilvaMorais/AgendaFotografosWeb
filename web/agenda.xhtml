@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    
+    <h:head>
+        <title>Sistema de Agenda</title>
+        <style>
+            /* Estilo "Backend-First" - Simples e funcional */
+            body { 
+                font-family: "Courier New", Courier, monospace; /* Fonte de programador */
+                background-color: #ffffff; 
+                margin: 20px;
+            }
+            .bloco-form {
+                border: 2px solid #999999;
+                padding: 10px;
+                background-color: #f2f2f2;
+                margin-bottom: 15px;
+                width: 600px;
+            }
+            .titulo-sessao {
+                background-color: #666666;
+                color: white;
+                padding: 3px;
+                font-size: 14px;
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
+            .campo-grupo {
+                margin-bottom: 10px;
+            }
+            .tabela-eventos {
+                border: 1px solid black;
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 12px;
+            }
+            .tabela-eventos th {
+                border: 1px solid black;
+                background-color: #e0e0e0;
+                padding: 5px;
+            }
+            .tabela-eventos td {
+                border: 1px solid black;
+                padding: 5px;
+            }
+            .btn-finalizar {
+                background-color: #dddddd;
+                border: 2px outset #ffffff;
+                padding: 10px;
+                width: 100%;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .btn-cancelar {
+                color: red;
+                border: 1px solid red;
+                background: white;
+                cursor: pointer;
+            }
+            .link-home {
+                color: blue;
+                text-decoration: none;
+                font-weight: bold;
+            }
+            .msg-erro { color: #ff0000; }
+            .msg-info { color: #0000ff; }
+        </style>
+    </h:head>
+    
+    <h:body>
+        <h:link outcome="index" value="[ Sair e Voltar ao Menu ]" styleClass="link-home" />
+        <hr/>
+
+        <h2>Novo Agendamento de Evento</h2>
+        
+        <h:messages globalOnly="true" showDetail="true" errorClass="msg-erro" infoClass="msg-info" />
+
+        <h:form id="formAgenda">
+            <div class="bloco-form">
+                <div class="titulo-sessao">1. O QUE E ONDE?</div>
+                <div class="campo-grupo">
+                    Título: <br/>
+                    <h:inputText value="#{agendaController.evento.titulo}" size="50" required="true" />
+                </div>
+                <div class="campo-grupo">
+                    Local: <br/>
+                    <h:inputText value="#{agendaController.evento.localizacao}" size="50" />
+                </div>
+
+                <div class="titulo-sessao">2. QUANDO?</div>
+                <div class="campo-grupo">
+                    Início (dd/mm/aaaa hh:mm): <br/>
+                    <h:inputText value="#{agendaController.evento.dataHoraInicio}" size="20" required="true" converter="localDateTimeConverter" />
+                </div>
+                <div class="campo-grupo">
+                    Fim (dd/mm/aaaa hh:mm): <br/>
+                    <h:inputText value="#{agendaController.evento.dataHoraFim}" size="20" required="true" converter="localDateTimeConverter" />
+                </div>
+
+                <div class="titulo-sessao">3. QUEM E COM O QUE?</div>
+                <div class="campo-grupo">
+                    Fotógrafo: <br/>
+                    <h:selectOneMenu value="#{agendaController.idFotografoSelecionado}" required="true">
+                        <f:selectItem itemLabel="-- Escolha um --" itemValue="#{null}" />
+                        <f:selectItems value="#{agendaController.getListaFotografos()}" var="f" itemValue="#{f.id}" itemLabel="#{f.nomeCompleto}" />
+                    </h:selectOneMenu>
+                </div>
+                <div class="campo-grupo">
+                    Equipamento Extra: <br/>
+                    <h:selectOneMenu value="#{agendaController.idEquipamentoSelecionado}">
+                        <f:selectItem itemLabel="-- Nenhum --" itemValue="#{null}" />
+                        <f:selectItems value="#{agendaController.getListaEquipamentos()}" var="e" itemValue="#{e.id}" itemLabel="#{e.descricao} (Livres: #{e.quantidadeTotal - e.quantidadeEmUso})" />
+                    </h:selectOneMenu>
+                    Qtd: <h:inputText value="#{agendaController.quantidadeRetirada}" size="2" />
+                </div>
+                
+                <h:commandButton value="GRAVAR AGENDAMENTO" action="#{agendaController.agendar}" styleClass="btn-finalizar" />
+            </div>
+        </h:form>
+
+        <br/>
+        <h3>Cronograma de Eventos Ativos</h3>
+        
+        <h:form id="formListaEventos">
+            <h:dataTable value="#{agendaController.listaEventos}" var="evt" styleClass="tabela-eventos">
+                <h:column>
+                    <f:facet name="header">ID</f:facet>
+                    <h:outputText value="#{evt.id}" />
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Evento / Título</f:facet>
+                    <h:outputText value="#{evt.titulo}" />
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Data Início</f:facet>
+                    <h:outputText value="#{evt.dataHoraInicio}" converter="localDateTimeConverter" />
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Data Fim</f:facet>
+                    <h:outputText value="#{evt.dataHoraFim}" converter="localDateTimeConverter" />
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Status</f:facet>
+                    <h:outputText value="#{evt.status}" />
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Ações</f:facet>
+                    <h:commandButton value="cancelar" 
+                                     action="#{agendaController.excluir(evt)}" 
+                                     styleClass="btn-cancelar"
+                                     onclick="return confirm('Deseja cancelar o evento e liberar fotografo/estoque?');" />
+                </h:column>
+            </h:dataTable>
+        </h:form>
+        
+    </h:body>
+</html>

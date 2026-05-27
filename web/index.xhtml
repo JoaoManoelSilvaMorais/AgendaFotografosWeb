@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html">
+    
+    <h:head>
+        <title>Menu Principal</title>
+        <style>
+            /* CSS estilo "aprendendo web" */
+            body { 
+                font-family: sans-serif; 
+                background-color: #ffffff; 
+                color: #000000;
+                margin: 20px;
+            }
+            .caixa-menu { 
+                width: 400px; 
+                margin: 0 auto; /* Centralização clássica */
+                border: 2px solid #000000; 
+                padding: 15px; 
+                text-align: center;
+                background-color: #f9f9f9;
+            }
+            h1 { 
+                font-size: 22px; 
+                text-decoration: underline;
+            }
+            p {
+                font-size: 14px;
+            }
+            .lista-menu { 
+                list-style-type: none; 
+                padding: 0; 
+            }
+            .lista-menu li { 
+                margin-bottom: 10px; 
+            }
+            .botao-simples { 
+                display: block; 
+                background-color: #e0e0e0; 
+                border: 1px solid #888888; 
+                padding: 8px; 
+                text-decoration: none; 
+                color: #0000ee; /* Azul padrão de link */
+                font-weight: bold;
+            }
+            .botao-simples:hover { 
+                background-color: #cccccc; 
+            }
+            .rodape { 
+                margin-top: 20px; 
+                font-size: 12px; 
+                border-top: 1px dashed #000000; 
+                padding-top: 5px; 
+            }
+        </style>
+    </h:head>
+    
+    <h:body>
+        <div class="caixa-menu">
+            <h1>Sistema de Eventos</h1>
+            <p>Escolha uma opção abaixo:</p>
+
+            <ul class="lista-menu">
+                <li>
+                    <h:link outcome="fotografos" styleClass="botao-simples" value="1. Cadastrar Fotógrafos" />
+                </li>
+                <li>
+                    <h:link outcome="equipamentos" styleClass="botao-simples" value="2. Controle de Estoque" />
+                </li>
+                <li>
+                    <h:link outcome="agenda" styleClass="botao-simples" value="3. Agendar Evento" />
+                </li>
+            </ul>
+
+            <div class="rodape">
+                Sistema desenvolvido em Java Web<br/>
+                Sistemas de Informação - UEG
+            </div>
+        </div>
+    </h:body>
+</html>
