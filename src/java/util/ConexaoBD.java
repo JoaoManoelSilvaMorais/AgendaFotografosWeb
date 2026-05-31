@@ -8,7 +8,7 @@ public class ConexaoBD {
     
     private static final String URL = "jdbc:postgresql://localhost:5432/agendafotografos";
     private static final String USUARIO = "postgres"; 
-    private static final String SENHA = "suasenha"; // Coloque a sua senha aqui!
+    private static final String SENHA = "123456"; // Coloque a sua senha aqui!
 
     public static Connection getConexao() throws SQLException {
         try {
@@ -28,7 +28,7 @@ public class ConexaoBD {
                 conn.close(); 
             }
         } catch (SQLException e) {
-            System.err.println("‚ùå Erro ao conectar com o banco de dados:");
+            System.err.println("‚?å Erro ao conectar com o banco de dados:");
             e.printStackTrace();
         }
     }*/
