@@ -1,4 +1,4 @@
-# 📸 Sistema de Gestão de Agenda Fotográfica e Estoque
+# Sistema de Gestão de Agenda Fotográfica e Estoque
 
 ![Java](https://img.shields.io/badge/Java-EE_7-ED8B00?style=for-the-badge&logo=java&logoColor=white)
 ![JSF](https://img.shields.io/badge/JSF-2.2-blue?style=for-the-badge)
@@ -11,7 +11,7 @@ Trata-se de um sistema web completo para gerenciar a escala de fotógrafos em ev
 
 ---
 
-## 🎯 Principais Funcionalidades e Regras de Negócio
+## Principais Funcionalidades e Regras de Negócio
 
 - **CRUD de Fotógrafos:** Cadastro completo de profissionais com validação de chaves.
 - **Controle de Estoque (Inventário):** Gestão de câmeras, lentes e acessórios.
@@ -21,7 +21,7 @@ Trata-se de um sistema web completo para gerenciar a escala de fotógrafos em ev
 
 ---
 
-## 🏗️ Diagrama de Classes (Modelo de Domínio)
+## Diagrama de Classes (Modelo de Domínio)
 
 O diagrama abaixo representa a estrutura orientada a objetos do sistema e como as tabelas intermediárias resolvem a cardinalidade N:N.
 
@@ -74,7 +74,7 @@ classDiagram
 
 ---
 
-## 🗺️ Fluxo de Navegação (Views)
+## Fluxo de Navegação (Views)
 
 A interface foi desenvolvida em XHTML/JSF com navegação implícita focada na simplicidade e eficiência.
 
@@ -91,7 +91,7 @@ graph TD
 
 ---
 
-## ⚙️ Configuração do Banco de Dados (PostgreSQL)
+## Configuração do Banco de Dados (PostgreSQL)
 
 Para rodar o projeto localmente, crie um banco de dados chamado `agendafotografos` no PostgreSQL e execute o script DDL abaixo para estruturar as tabelas:
 
@@ -143,7 +143,7 @@ CREATE TABLE alocacao_equipamento (
 
 ---
 
-## 🚀 Guia de Instalação e Execução
+## Guia de Instalação e Execução
 
 ### Pré-requisitos
 * **JDK 8** (Java SE 8)
@@ -165,6 +165,6 @@ CREATE TABLE alocacao_equipamento (
 
 ---
 
-## 👨‍💻 Autor
+## Autor
 
 **Manoel** *Estudante de Sistemas de Informação - UEG (Universidade Estadual de Goiás)* Projeto desenvolvido como requisito prático para avaliação acadêmica.
