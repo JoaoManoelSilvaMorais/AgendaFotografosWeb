@@ -6,91 +6,80 @@ import java.util.List;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext; // Importação correta do contexto do JSF
+import javax.faces.context.FacesContext; 
 
 import model.Fotografo;
 import persistencia.FotografoDAO;
 
-/**
- * Controller responsável por ligar a tela de cadastro de fotógrafos ao backend.
- * Implementa Serializable pois o escopo ViewScoped exige que os dados possam ser 
- * serializados na memória do servidor GlassFish.
- */
 @ManagedBean
 @ViewScoped
 public class FotografoController implements Serializable {
 
-    // O objeto que vai receber os dados digitados nos campos de texto da tela
     private Fotografo fotografo;
-    
-    // A lista que vai preencher a tabela de dados (dataTable) na tela
     private List<Fotografo> listaFotografos;
-    
     private FotografoDAO dao;
 
-    /**
-     * Construtor: Executado assim que o usuário acessa a tela de fotógrafos.
-     */
     public FotografoController() {
         this.dao = new FotografoDAO();
-        // Inicializamos o objeto vazio para que a tela não dê erro ao tentar carregar os campos
         this.fotografo = new Fotografo(); 
-        this.fotografo.setDataContratacao(LocalDate.now()); // Sugere a data de hoje por padrão
+        this.fotografo.setDataContratacao(LocalDate.now()); 
     }
 
-    /**
-     * Método chamado pelo botão "Salvar" da tela web.
-     */
     public void salvar() {
-        boolean sucesso = dao.salvar(fotografo);
+        boolean sucesso;
         
-        // AQUI ESTÁ O SEGREDO: Usamos getCurrentInstance() e não getContext()
+        // Verifica se é uma inserção (ID nulo) ou uma atualização (ID existente)
+        if (this.fotografo.getId() == null || this.fotografo.getId() == 0) {
+            sucesso = dao.salvar(fotografo);
+        } else {
+            sucesso = dao.atualizar(fotografo);
+        }
+        
         FacesContext context = FacesContext.getCurrentInstance();
         
         if (sucesso) {
-            // Envia uma mensagem verde (SEVERITY_INFO) para a tela
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
-                "Sucesso", "Fotógrafo cadastrado com sucesso!"));
+                "Sucesso", "Dados do fotógrafo gravados com sucesso!"));
             
-            // Limpa o formulário instanciando um novo objeto
+            // Limpa o formulário
             this.fotografo = new Fotografo();
             this.fotografo.setDataContratacao(LocalDate.now());
             
-            // Força a atualização da lista para que o novo cadastro já apareça na tabela abaixo
+            // Força a recarga da lista
             this.listaFotografos = null; 
             
         } else {
-            // Envia uma mensagem vermelha (SEVERITY_ERROR) para a tela
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, 
-                "Erro", "Ocorreu um problema ao cadastrar. Verifique se o CPF já existe."));
+                "Erro", "Ocorreu um problema ao salvar. Verifique os dados fornecidos."));
         }
     }
     
-    /**
-     * Método acionado pelo botão de exclusão da tabela na tela web.
-     * @param f O objeto Fotografo selecionado na linha da tabela.
-     */
+    // NOVO MÉTODO: Carrega os dados da linha clicada para o formulário
+    public void prepararEdicao(Fotografo f) {
+        // Criamos uma cópia para que alterações não salvas não reflitam na tabela instantaneamente
+        this.fotografo = new Fotografo(
+            f.getId(), 
+            f.getNomeCompleto(), 
+            f.getCpf(), 
+            f.getTelefone(), 
+            f.getDataContratacao(), 
+            f.getAtivo()
+        );
+    }
+    
     public void excluir(Fotografo f) {
-        // Envia o ID do objeto para o método de exclusão do DAO
         boolean sucesso = dao.excluir(f.getId());
-        
         FacesContext context = FacesContext.getCurrentInstance();
         
         if (sucesso) {
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
                 "Sucesso", "Fotógrafo removido com sucesso!"));
-            
-            // Força a recarga da tabela limpando a lista na memória (Lazy Loading)
             this.listaFotografos = null; 
         } else {
-            // Caso o DAO retorne false (ex: violação de integridade por estar escalado)
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, 
                 "Erro ao excluir", "Não é possível remover este fotógrafo pois ele está vinculado a um evento."));
         }
     }
-
-    // --- GETTERS E SETTERS ---
-    // O JSF exige os getters e setters para conseguir ler e escrever na tela!
 
     public Fotografo getFotografo() {
         return fotografo;
@@ -100,10 +89,6 @@ public class FotografoController implements Serializable {
         this.fotografo = fotografo;
     }
 
-    /**
-     * Método chamado pela tabela da tela web (dataTable) para listar os registros.
-     * Usa o conceito de "Lazy Loading" básico: só vai ao banco buscar se a lista estiver nula.
-     */
     public List<Fotografo> getListaFotografos() {
         if (listaFotografos == null) {
             listaFotografos = dao.listarTodos();

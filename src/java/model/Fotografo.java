@@ -69,7 +69,4 @@ public class Fotografo {
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
     }
-    
-    
-
 }

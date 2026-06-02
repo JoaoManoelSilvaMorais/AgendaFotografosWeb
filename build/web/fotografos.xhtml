@@ -7,7 +7,6 @@
     <h:head>
         <title>Gestão de Fotógrafos</title>
         <style>
-            /* CSS básico - Estilo aluno aprendendo HTML */
             body { 
                 font-family: sans-serif; 
                 background-color: #ffffff; 
@@ -52,6 +51,7 @@
                 padding: 4px 10px;
                 cursor: pointer;
                 color: #000000;
+                margin-right: 5px;
             }
             .botao-excluir {
                 background-color: #ffcccc;
@@ -60,7 +60,6 @@
                 cursor: pointer;
                 font-size: 12px;
             }
-            /* Mensagens sem caixas coloridas, só o texto */
             .msg-erro { color: red; font-weight: bold; list-style-type: square; }
             .msg-info { color: green; font-weight: bold; list-style-type: square; }
         </style>
@@ -75,6 +74,9 @@
 
         <div class="caixa-formulario">
             <h:form id="formCadastro">
+                
+                <h:inputHidden value="#{fotografoController.fotografo.id}" />
+       
                 <div class="linha-campo">
                     <h:outputLabel for="nome" value="Nome Completo: " /><br/>
                     <h:inputText id="nome" value="#{fotografoController.fotografo.nomeCompleto}" required="true" requiredMessage="O nome é obrigatório." size="40" />
@@ -129,6 +131,11 @@
                 
                 <h:column>
                     <f:facet name="header">Ação</f:facet>
+                    
+                    <h:commandButton value="Editar" 
+                                     action="#{fotografoController.prepararEdicao(foto)}" 
+                                     styleClass="botao-padrao" />
+                    
                     <h:commandButton value="Excluir" 
                                      action="#{fotografoController.excluir(foto)}" 
                                      styleClass="botao-excluir"
