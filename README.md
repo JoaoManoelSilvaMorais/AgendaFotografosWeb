@@ -1,6 +1,6 @@
 # Sistema de Gestão de Agenda Fotográfica e Estoque
 
-![Java](https://img.shields.io/badge/Java-EE_7-ED8B00?style=for-the-badge&logo=java&logoColor=white)
+![Java](https://img.shields.io/badge/Java-EE_8-ED8B00?style=for-the-badge&logo=java&logoColor=white)
 ![JSF](https://img.shields.io/badge/JSF-2.2-blue?style=for-the-badge)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![GlassFish](https://img.shields.io/badge/GlassFish-4.1-orange?style=for-the-badge)
