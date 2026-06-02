@@ -9,7 +9,7 @@
         <style>
             /* Estilo "Backend-First" - Simples e funcional */
             body { 
-                font-family: "Courier New", Courier, monospace; /* Fonte de programador */
+                font-family: "Courier New", Courier, monospace; 
                 background-color: #ffffff; 
                 margin: 20px;
             }
@@ -53,12 +53,29 @@
                 width: 100%;
                 font-weight: bold;
                 cursor: pointer;
+                margin-bottom: 5px;
+            }
+            .btn-cancelar-edicao {
+                background-color: #ffcccc;
+                border: 2px outset #ff9999;
+                color: #990000;
+                padding: 10px;
+                width: 100%;
+                font-weight: bold;
+                cursor: pointer;
             }
             .btn-cancelar {
                 color: red;
                 border: 1px solid red;
                 background: white;
                 cursor: pointer;
+            }
+            .btn-editar {
+                color: #0055cc;
+                border: 1px solid #0055cc;
+                background: #e6f0ff;
+                cursor: pointer;
+                margin-right: 5px;
             }
             .link-home {
                 color: blue;
@@ -74,12 +91,21 @@
         <h:link outcome="index" value="[ Sair e Voltar ao Menu ]" styleClass="link-home" />
         <hr/>
 
-        <h2>Novo Agendamento de Evento</h2>
+        <h2>
+            <h:outputText value="#{empty agendaController.evento.id or agendaController.evento.id == 0 ? 'Novo Agendamento de Evento' : 'Editar Agendamento de Evento'}" />
+        </h2>
         
         <h:messages globalOnly="true" showDetail="true" errorClass="msg-erro" infoClass="msg-info" />
 
         <h:form id="formAgenda">
             <div class="bloco-form">
+                
+                <h:panelGroup rendered="#{not empty agendaController.evento.id and agendaController.evento.id != 0}">
+                    <div style="background-color: #ffffcc; padding: 5px; border: 1px solid #cccc00; margin-bottom: 10px;">
+                        <strong>Atenção:</strong> Você está editando o Evento ID: #{agendaController.evento.id}
+                    </div>
+                </h:panelGroup>
+
                 <div class="titulo-sessao">1. O QUE E ONDE?</div>
                 <div class="campo-grupo">
                     Título: <br/>
@@ -117,7 +143,15 @@
                     Qtd: <h:inputText value="#{agendaController.quantidadeRetirada}" size="2" />
                 </div>
                 
-                <h:commandButton value="GRAVAR AGENDAMENTO" action="#{agendaController.agendar}" styleClass="btn-finalizar" />
+                <h:commandButton value="#{empty agendaController.evento.id or agendaController.evento.id == 0 ? 'GRAVAR AGENDAMENTO' : 'ATUALIZAR AGENDAMENTO'}" 
+                                 action="#{agendaController.salvar}" 
+                                 styleClass="btn-finalizar" />
+                                 
+                <h:commandButton value="CANCELAR EDIÇÃO" 
+                                 action="#{agendaController.cancelarEdicao}" 
+                                 styleClass="btn-cancelar-edicao" 
+                                 rendered="#{not empty agendaController.evento.id and agendaController.evento.id != 0}" 
+                                 immediate="true" />
             </div>
         </h:form>
 
@@ -148,10 +182,14 @@
                 </h:column>
                 <h:column>
                     <f:facet name="header">Ações</f:facet>
-                    <h:commandButton value="cancelar" 
+                    <h:commandButton value="editar" 
+                                     action="#{agendaController.prepararEdicao(evt)}" 
+                                     styleClass="btn-editar" />
+                                     
+                    <h:commandButton value="excluir" 
                                      action="#{agendaController.excluir(evt)}" 
                                      styleClass="btn-cancelar"
-                                     onclick="return confirm('Deseja cancelar o evento e liberar fotografo/estoque?');" />
+                                     onclick="return confirm('Deseja excluir o evento e liberar as dependências associadas?');" />
                 </h:column>
             </h:dataTable>
         </h:form>

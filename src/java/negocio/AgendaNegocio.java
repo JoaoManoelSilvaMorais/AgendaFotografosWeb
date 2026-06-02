@@ -3,8 +3,10 @@ package negocio;
 import model.AlocacaoEquipamento;
 import model.EscalaEvento;
 import model.Equipamento;
+import model.Evento;
 import persistencia.EscalaEventoDAO;
 import persistencia.AlocacaoEquipamentoDAO;
+import persistencia.EventoDAO;
 
 /**
  * Classe de Negócio responsável por orquestrar as regras da agenda.
@@ -14,16 +16,82 @@ public class AgendaNegocio {
 
     private EscalaEventoDAO escalaDAO;
     private AlocacaoEquipamentoDAO alocacaoDAO;
+    private EventoDAO eventoDAO;
 
     public AgendaNegocio() {
         this.escalaDAO = new EscalaEventoDAO();
         this.alocacaoDAO = new AlocacaoEquipamentoDAO();
+        this.eventoDAO = new EventoDAO();
     }
+    
+    // ==========================================================
+    // MÉTODOS DE GERENCIAMENTO DE EVENTOS
+    // ==========================================================
+
+    /**
+     * Salva um novo evento aplicando validações de negócio.
+     * @param evento Objeto evento a ser salvo.
+     * @throws Exception Caso as datas sejam inválidas ou falte o título.
+     */
+    public void salvarEvento(Evento evento) throws Exception {
+        validarDadosEvento(evento);
+
+        boolean sucesso = eventoDAO.salvar(evento);
+        if (!sucesso) {
+            throw new Exception("Erro interno ao tentar cadastrar o evento no banco de dados.");
+        }
+    }
+
+    /**
+     * Atualiza um evento existente aplicando validações de negócio.
+     * @param evento Objeto evento contendo as alterações.
+     * @throws Exception Caso as datas sejam inválidas ou falte o título.
+     */
+    public void atualizarEvento(Evento evento) throws Exception {
+        validarDadosEvento(evento);
+
+        boolean sucesso = eventoDAO.atualizar(evento);
+        if (!sucesso) {
+            throw new Exception("Erro interno ao tentar atualizar o evento no banco de dados.");
+        }
+    }
+
+    /**
+     * Exclui um evento e limpa suas dependências em cascata.
+     * @param idEvento ID do evento a ser excluído.
+     * @throws Exception Caso ocorra um erro na transação.
+     */
+    public void excluirEvento(int idEvento) throws Exception {
+        boolean sucesso = eventoDAO.excluir(idEvento);
+        if (!sucesso) {
+            throw new Exception("Erro ao excluir o evento. Verifique se existem dependências ativas.");
+        }
+    }
+
+    /**
+     * REGRA DE NEGÓCIO: Centraliza a validação das informações do evento.
+     * Garante que não teremos eventos sem título ou com horários invertidos (fim antes do início).
+     */
+    private void validarDadosEvento(Evento evento) throws Exception {
+        if (evento.getTitulo() == null || evento.getTitulo().trim().isEmpty()) {
+            throw new Exception("Operação negada: O título do evento é obrigatório.");
+        }
+
+        if (evento.getDataHoraInicio() != null && evento.getDataHoraFim() != null) {
+            if (evento.getDataHoraFim().isBefore(evento.getDataHoraInicio())) {
+                throw new Exception("Operação negada: A data/hora de término não pode ser anterior à data/hora de início.");
+            }
+        }
+    }
+
+    // ==========================================================
+    // MÉTODOS DE ALOCAÇÃO E ESCALA (Muitos-para-Muitos)
+    // ==========================================================
 
     /**
      * Tenta agendar um fotógrafo para um evento.
      * Aplica a regra de negócio de verificação de choque de horários.
-     * * @param escala Objeto contendo o Fotografo e o Evento pretendido.
+     * @param escala Objeto contendo o Fotografo e o Evento pretendido.
      * @throws Exception Caso o fotógrafo já esteja ocupado no horário.
      */
     public void agendarFotografo(EscalaEvento escala) throws Exception {
@@ -53,7 +121,7 @@ public class AgendaNegocio {
     /**
      * Registra a retirada de um equipamento para um evento específico.
      * Valida se a empresa tem estoque suficiente antes de alocar.
-     * * @param alocacao Objeto contendo a escala, o equipamento e a quantidade desejada.
+     * @param alocacao Objeto contendo a escala, o equipamento e a quantidade desejada.
      * @throws Exception Caso a quantidade solicitada seja maior que o estoque disponível.
      */
     public void alocarEquipamento(AlocacaoEquipamento alocacao) throws Exception {

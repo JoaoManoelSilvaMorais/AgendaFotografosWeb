@@ -20,7 +20,7 @@ import persistencia.FotografoDAO;
 /**
  * Controller responsável pela tela de Agendamento.
  * Orquestra a criação do Evento, a escala do Fotógrafo e a alocação de Equipamentos,
- * passando pelas regras de negócio rigorosas da aplicação.
+ * além de gerenciar a edição e atualização das informações.
  */
 @ManagedBean
 @ViewScoped
@@ -46,87 +46,116 @@ public class AgendaController implements Serializable {
     }
 
     /**
-     * Método principal chamado pelo botão "Finalizar Agendamento" na tela.
+     * Método principal chamado pelo botão "Finalizar Agendamento" ou "Atualizar" na tela.
+     * Capaz de distinguir entre a criação de um novo evento e a edição de um já existente.
      */
-    public void agendar() {
+    public void salvar() {
         FacesContext context = FacesContext.getCurrentInstance();
+        
+        // Verifica se é um registro novo (ID nulo ou 0) ou uma edição
+        boolean isNovo = (evento.getId() == null || evento.getId() == 0);
 
         try {
-            // 1. Salva o evento base
-            boolean eventoSalvo = eventoDAO.salvar(evento); 
-            if (!eventoSalvo) {
-                throw new Exception("Falha ao salvar os dados base do evento.");
-            }
-
-            // 2. Monta o objeto de Escala
-            Fotografo fotografoEscolhido = new Fotografo();
-            fotografoEscolhido.setId(idFotografoSelecionado);
-            
-            EscalaEvento escala = new EscalaEvento();
-            escala.setEvento(evento);
-            escala.setFotografo(fotografoEscolhido);
-
-            // 3. Verifica o horário do fotógrafo e salva a escala
-            agendaNegocio.agendarFotografo(escala);
-
-            // 4. Se o usuário selecionou equipamento extra
-            if (idEquipamentoSelecionado != null && quantidadeRetirada != null && quantidadeRetirada > 0) {
+            if (isNovo) {
+                // =========================================================
+                // LÓGICA DE INSERÇÃO (Antigo agendar)
+                // =========================================================
                 
-                // CORREÇÃO: Em vez de criar um equipamento vazio só com ID, 
-                // nós buscamos o objeto INTEIRO da lista para ter as quantidades carregadas!
-                Equipamento equipamentoEscolhido = null;
-                for (Equipamento eqp : getListaEquipamentos()) {
-                    if (eqp.getId().equals(idEquipamentoSelecionado)) {
-                        equipamentoEscolhido = eqp;
-                        break;
+                // 1. Salva o evento base
+                boolean eventoSalvo = eventoDAO.salvar(evento); 
+                if (!eventoSalvo) {
+                    throw new Exception("Falha ao salvar os dados base do evento.");
+                }
+
+                // 2. Monta o objeto de Escala
+                Fotografo fotografoEscolhido = new Fotografo();
+                fotografoEscolhido.setId(idFotografoSelecionado);
+                
+                EscalaEvento escala = new EscalaEvento();
+                escala.setEvento(evento);
+                escala.setFotografo(fotografoEscolhido);
+
+                // 3. Verifica o horário do fotógrafo e salva a escala
+                agendaNegocio.agendarFotografo(escala);
+
+                // 4. Se o usuário selecionou equipamento extra
+                if (idEquipamentoSelecionado != null && quantidadeRetirada != null && quantidadeRetirada > 0) {
+                    Equipamento equipamentoEscolhido = null;
+                    for (Equipamento eqp : getListaEquipamentos()) {
+                        if (eqp.getId().equals(idEquipamentoSelecionado)) {
+                            equipamentoEscolhido = eqp;
+                            break;
+                        }
+                    }
+
+                    if (equipamentoEscolhido != null) {
+                        AlocacaoEquipamento alocacao = new AlocacaoEquipamento();
+                        alocacao.setEscala(escala);
+                        alocacao.setEquipamento(equipamentoEscolhido);
+                        alocacao.setQuantidade(quantidadeRetirada);
+
+                        // Verifica o estoque e salva a alocação
+                        agendaNegocio.alocarEquipamento(alocacao);
                     }
                 }
 
-                if (equipamentoEscolhido != null) {
-                    AlocacaoEquipamento alocacao = new AlocacaoEquipamento();
-                    alocacao.setEscala(escala);
-                    alocacao.setEquipamento(equipamentoEscolhido);
-                    alocacao.setQuantidade(quantidadeRetirada);
-
-                    // Verifica o estoque e salva a alocação
-                    agendaNegocio.alocarEquipamento(alocacao);
-                }
+                context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
+                    "Sucesso", "Evento agendado e recursos alocados!"));
+            } else {
+                // =========================================================
+                // LÓGICA DE EDIÇÃO / ATUALIZAÇÃO
+                // =========================================================
+                agendaNegocio.atualizarEvento(evento);
+                context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
+                    "Sucesso", "Evento atualizado com sucesso!"));
             }
 
-            // SUCESSO ABSOLUTO
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
-                "Sucesso", "Evento agendado e recursos alocados!"));
-            
-            // Limpa o formulário
-            this.evento = new Evento();
-            this.idFotografoSelecionado = null;
-            this.idEquipamentoSelecionado = null;
-            this.quantidadeRetirada = null;
+            // Limpa o formulário após sucesso em qualquer um dos casos
+            cancelarEdicao();
 
         } catch (Exception e) {
-            // ROLLBACK MANUAL: Se deu erro (estoque insuficiente ou fotógrafo ocupado) 
-            // DEPOIS que o evento já tinha sido gravado, nós apagamos ele para não sujar o banco.
-            if (evento.getId() != null) {
+            // ROLLBACK MANUAL: Se for um evento NOVO e der erro no meio do caminho, limpa o banco.
+            if (isNovo && evento.getId() != null) {
                 eventoDAO.excluir(evento.getId());
-                evento.setId(null); // Tira o ID da memória
+                evento.setId(null); 
             }
 
-            // Tratamento contra mensagens nulas (NullPointerException)
             String msg = e.getMessage();
             if (msg == null) {
-                msg = "Erro interno no processamento. Veja o log do GlassFish.";
-                e.printStackTrace(); // Registra no console para o programador ver
+                msg = "Erro interno no processamento. Veja o log do servidor.";
+                e.printStackTrace(); 
             }
 
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, 
                 "Atenção - Regra de Negócio", msg));
                 
         } finally {
-            // BLOCO FINALLY: Executa sempre, dando erro ou sucesso!
-            // Isso garante que a tabela no rodapé da página SEMPRE atualize, não importa o que aconteça.
+            // Recarrega as tabelas para garantir consistência
             this.listaEventos = null;
             this.listaEquipamentos = null;
         }
+    }
+
+    /**
+     * Carrega os dados da linha selecionada na tabela para o formulário.
+     * @param eventoSelecionado O evento clicado na View.
+     */
+    public void prepararEdicao(Evento eventoSelecionado) {
+        this.evento = eventoSelecionado;
+        // Ao focar apenas em editar a entidade Evento, limpamos os campos de alocação secundária
+        this.idFotografoSelecionado = null;
+        this.idEquipamentoSelecionado = null;
+        this.quantidadeRetirada = null;
+    }
+
+    /**
+     * Limpa o formulário e cancela o processo de edição.
+     */
+    public void cancelarEdicao() {
+        this.evento = new Evento();
+        this.idFotografoSelecionado = null;
+        this.idEquipamentoSelecionado = null;
+        this.quantidadeRetirada = null;
     }
     
     /**
@@ -141,7 +170,6 @@ public class AgendaController implements Serializable {
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
                 "Sucesso", "Evento cancelado e todos os recursos e agendas foram liberados!"));
             
-            // Reseta as listas locais para que a tela atualize o estoque e os eventos de imediato
             this.listaEventos = null;
             this.listaEquipamentos = null;
         } else {
@@ -150,8 +178,6 @@ public class AgendaController implements Serializable {
         }
     }
     
-    
-
     // --- GETTERS E SETTERS ---
     
     public Evento getEvento() { return evento; }
@@ -166,9 +192,6 @@ public class AgendaController implements Serializable {
     public Integer getQuantidadeRetirada() { return quantidadeRetirada; }
     public void setQuantidadeRetirada(Integer quantidadeRetirada) { this.quantidadeRetirada = quantidadeRetirada; }
 
-    /**
-     * Carrega a lista de fotógrafos para o SelectOneMenu (Dropdown) da tela.
-     */
     public List<Fotografo> getListaFotografos() {
         if (listaFotografos == null) {
             listaFotografos = new FotografoDAO().listarTodos();
@@ -176,9 +199,6 @@ public class AgendaController implements Serializable {
         return listaFotografos;
     }
 
-    /**
-     * Carrega a lista de equipamentos para o SelectOneMenu (Dropdown) da tela.
-     */
     public List<Equipamento> getListaEquipamentos() {
         if (listaEquipamentos == null) {
             listaEquipamentos = new EquipamentoDAO().listarTodos();
@@ -186,9 +206,6 @@ public class AgendaController implements Serializable {
         return listaEquipamentos;
     }
     
-    /**
-     * Getter da lista de eventos utilizando Lazy Loading.
-     */
     public List<Evento> getListaEventos() {
         if (listaEventos == null) {
             listaEventos = eventoDAO.listarTodos();

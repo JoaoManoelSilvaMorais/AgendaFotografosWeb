@@ -23,10 +23,9 @@ public class EventoDAO {
      * @return true se o agendamento for concluído com sucesso, false em caso de falha.
      */
     public boolean salvar(Evento evento) {
-        // ADICIONADO: A cláusula RETURNING id nativa do PostgreSQL
+        // A cláusula RETURNING id nativa do PostgreSQL
         String sql = "INSERT INTO evento (titulo, data_hora_inicio, data_hora_fim, localizacao) VALUES (?, ?, ?, ?) RETURNING id";
         
-        // REMOVIDO: O PreparedStatement.RETURN_GENERATED_KEYS
         try (Connection conn = ConexaoBD.getConexao(); 
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
@@ -46,7 +45,6 @@ public class EventoDAO {
             
             stmt.setString(4, evento.getLocalizacao());
             
-            // NOVO CÓDIGO: Executamos como uma consulta que devolve um ResultSet
             try (java.sql.ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     // Captura a coluna 'id' devolvida pelo RETURNING
@@ -64,13 +62,51 @@ public class EventoDAO {
     }
 
     /**
+     * NOVO MÉTODO: Atualiza os dados de um evento existente.
+     * @param evento Objeto contendo os novos dados do evento.
+     * @return true se a atualização for concluída com sucesso.
+     */
+    public boolean atualizar(Evento evento) {
+        String sql = "UPDATE evento SET titulo = ?, data_hora_inicio = ?, data_hora_fim = ?, localizacao = ?, status = ? WHERE id = ?";
+        
+        try (Connection conn = ConexaoBD.getConexao(); 
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, evento.getTitulo());
+            
+            if (evento.getDataHoraInicio() != null) {
+                stmt.setTimestamp(2, java.sql.Timestamp.valueOf(evento.getDataHoraInicio()));
+            } else {
+                stmt.setNull(2, java.sql.Types.TIMESTAMP);
+            }
+            
+            if (evento.getDataHoraFim() != null) {
+                stmt.setTimestamp(3, java.sql.Timestamp.valueOf(evento.getDataHoraFim()));
+            } else {
+                stmt.setNull(3, java.sql.Types.TIMESTAMP);
+            }
+            
+            stmt.setString(4, evento.getLocalizacao());
+            stmt.setString(5, evento.getStatus() != null ? evento.getStatus() : "Agendado");
+            stmt.setInt(6, evento.getId());
+            
+            int linhasAfetadas = stmt.executeUpdate();
+            return linhasAfetadas > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar evento: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Recupera todos os eventos cadastrados.
      * @return Lista populada de eventos, ordenada cronologicamente.
      */
     public List<Evento> listarTodos() {
         List<Evento> lista = new ArrayList<>();
         
-        // 1. Ordenamos pela data de início. Isso é fundamental para a visualização cronológica da agenda na tela.
         String sql = "SELECT * FROM evento ORDER BY data_hora_inicio";
         
         try (Connection conn = ConexaoBD.getConexao();
@@ -83,7 +119,6 @@ public class EventoDAO {
                 evt.setId(rs.getInt("id"));
                 evt.setTitulo(rs.getString("titulo"));
                 
-                // 2. CONVERSÃO DE VOLTA: Lemos o Timestamp do PostgreSQL e convertemos para LocalDateTime do Java
                 Timestamp tsInicio = rs.getTimestamp("data_hora_inicio");
                 if (tsInicio != null) {
                     evt.setDataHoraInicio(tsInicio.toLocalDateTime());
@@ -95,7 +130,7 @@ public class EventoDAO {
                 }
                 
                 evt.setLocalizacao(rs.getString("localizacao"));
-                evt.setStatus(rs.getString("status")); // Traz o status gerado pelo banco
+                evt.setStatus(rs.getString("status")); 
                 
                 lista.add(evt);
             }
@@ -116,19 +151,15 @@ public class EventoDAO {
      * @return true se toda a cadeia de exclusão foi um sucesso.
      */
     public boolean excluir(int idEvento) {
-        // SQL 1: Devolve os itens ao estoque central antes de apagar os registros de alocação
         String sqlUpdateEstoque = "UPDATE equipamento SET quantidade_em_uso = quantidade_em_uso - ae.quantidade "
                                + "FROM alocacao_equipamento ae "
                                + "JOIN escala_evento ee ON ae.id_escala = ee.id "
                                + "WHERE ee.id_evento = ? AND equipamento.id = ae.id_equipamento";
         
-        // SQL 2: Remove as alocações associadas às escalas deste evento
         String sqlDeleteAlocacao = "DELETE FROM alocacao_equipamento WHERE id_escala IN (SELECT id FROM escala_evento WHERE id_evento = ?)";
         
-        // SQL 3: Remove os fotógrafos escalados para este evento
         String sqlDeleteEscala = "DELETE FROM escala_evento WHERE id_evento = ?";
         
-        // SQL 4: Remove o registro principal do evento
         String sqlDeleteEvento = "DELETE FROM evento WHERE id = ?";
         
         Connection conn = null;
@@ -139,35 +170,31 @@ public class EventoDAO {
         
         try {
             conn = ConexaoBD.getConexao();
-            conn.setAutoCommit(false); // Iniciamos o bloco controlado da transação (ACID)
+            conn.setAutoCommit(false); 
             
-            // Execução 1: Atualização física do estoque
             stmtUpdate = conn.prepareStatement(sqlUpdateEstoque);
             stmtUpdate.setInt(1, idEvento);
             stmtUpdate.executeUpdate();
             
-            // Execução 2: Limpeza de alocações
             stmtDelAloc = conn.prepareStatement(sqlDeleteAlocacao);
             stmtDelAloc.setInt(1, idEvento);
             stmtDelAloc.executeUpdate();
             
-            // Execução 3: Limpeza de escalas
             stmtDelEsc = conn.prepareStatement(sqlDeleteEscala);
             stmtDelEsc.setInt(1, idEvento);
             stmtDelEsc.executeUpdate();
             
-            // Execução 4: Exclusão do evento
             stmtDelEvt = conn.prepareStatement(sqlDeleteEvento);
             stmtDelEvt.setInt(1, idEvento);
             int linhasAfetadas = stmtDelEvt.executeUpdate();
             
-            conn.commit(); // Se nenhuma linha falhou, consolida todas as alterações no PostgreSQL
+            conn.commit(); 
             return linhasAfetadas > 0;
             
         } catch (SQLException e) {
             if (conn != null) {
                 try {
-                    conn.rollback(); // Se falhar em qualquer etapa, reverte tudo imediatamente
+                    conn.rollback(); 
                     System.err.println("Rollback executado: Erro ao tentar limpar dependências do evento.");
                 } catch (SQLException ex) {
                     ex.printStackTrace();
@@ -177,7 +204,6 @@ public class EventoDAO {
             e.printStackTrace();
             return false;
         } finally {
-            // Fechamento manual rigoroso das conexões e statements
             try {
                 if (stmtUpdate != null) stmtUpdate.close();
                 if (stmtDelAloc != null) stmtDelAloc.close();
