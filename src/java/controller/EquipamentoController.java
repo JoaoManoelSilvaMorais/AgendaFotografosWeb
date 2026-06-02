@@ -11,7 +11,7 @@ import model.Equipamento;
 import persistencia.EquipamentoDAO;
 
 /**
- * Controller responsável pela interface de cadastro e listagem de equipamentos do estoque.
+ * Controller responsável pela interface de cadastro, edição e listagem de equipamentos do estoque.
  */
 @ManagedBean
 @ViewScoped
@@ -31,27 +31,56 @@ public class EquipamentoController implements Serializable {
 
     /**
      * Captura os dados da tela e envia para a camada de persistência.
+     * Capaz de distinguir entre a criação de um novo equipamento e a edição de um já existente.
      */
     public void salvar() {
-        boolean sucesso = dao.salvar(equipamento);
-        
-        // Uso correto da API do JSF para captura do contexto atual
         FacesContext context = FacesContext.getCurrentInstance();
         
+        // Verifica se é um registro novo (ID nulo ou 0) ou uma edição
+        boolean isNovo = (equipamento.getId() == null || equipamento.getId() == 0);
+        boolean sucesso;
+
+        if (isNovo) {
+            // Lógica de INSERÇÃO
+            sucesso = dao.salvar(equipamento);
+            if (sucesso) {
+                context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
+                    "Sucesso", "Equipamento cadastrado com sucesso no estoque!"));
+            }
+        } else {
+            // Lógica de ATUALIZAÇÃO
+            sucesso = dao.atualizar(equipamento);
+            if (sucesso) {
+                context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
+                    "Sucesso", "Equipamento atualizado com sucesso!"));
+            }
+        }
+
         if (sucesso) {
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, 
-                "Sucesso", "Equipamento cadastrado com sucesso no estoque!"));
-            
             // Limpa o formulário instanciando um objeto vazio
-            this.equipamento = new Equipamento();
+            cancelarEdicao();
             
             // Invalida a lista atual para forçar uma nova busca no banco e atualizar a tabela da tela
             this.listaEquipamentos = null; 
-            
         } else {
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, 
-                "Erro", "Ocorreu um problema ao cadastrar o equipamento."));
+                "Erro", "Ocorreu um problema ao salvar os dados do equipamento."));
         }
+    }
+
+    /**
+     * Prepara o formulário para edição carregando os dados da linha selecionada na tabela.
+     * @param equipamentoSelecionado O objeto correspondente à linha clicada.
+     */
+    public void prepararEdicao(Equipamento equipamentoSelecionado) {
+        this.equipamento = equipamentoSelecionado;
+    }
+
+    /**
+     * Limpa o formulário e cancela o processo de edição.
+     */
+    public void cancelarEdicao() {
+        this.equipamento = new Equipamento();
     }
     
     /**

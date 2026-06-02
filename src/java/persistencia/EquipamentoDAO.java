@@ -52,6 +52,37 @@ public class EquipamentoDAO {
     }
 
     /**
+     * NOVO MÉTODO: Atualiza as informações de um equipamento já existente no estoque.
+     * @param equipamento Objeto contendo as novas informações.
+     * @return true se a atualização foi concluída com sucesso no banco.
+     */
+    public boolean atualizar(Equipamento equipamento) {
+        String sql = "UPDATE equipamento SET descricao = ?, tipo = ?, quantidade_total = ?, quantidade_em_uso = ? WHERE id = ?";
+        
+        try (Connection conn = ConexaoBD.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, equipamento.getDescricao());
+            stmt.setString(2, equipamento.getTipo());
+            stmt.setInt(3, equipamento.getQuantidadeTotal());
+            
+            // Mantém a quantidade em uso atual, a menos que o administrador esteja forçando um ajuste manual
+            stmt.setInt(4, equipamento.getQuantidadeEmUso() != null ? equipamento.getQuantidadeEmUso() : 0);
+            
+            // O ID é essencial na cláusula WHERE para não atualizar a tabela inteira por acidente
+            stmt.setInt(5, equipamento.getId());
+            
+            int linhasAfetadas = stmt.executeUpdate();
+            return linhasAfetadas > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar equipamento: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Retorna todo o inventário de equipamentos da empresa.
      * Útil para preencher a tabela da tela de controle de estoque.
      * @return Lista populada com objetos Equipamento (nunca retorna null).

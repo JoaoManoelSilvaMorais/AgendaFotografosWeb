@@ -54,6 +54,23 @@
                 padding: 3px 15px;
                 font-weight: bold;
                 cursor: pointer;
+                margin-right: 5px;
+            }
+            .btn-cancelar-edicao {
+                background-color: #ffcccc;
+                border: 2px outset #ff9999;
+                color: #990000;
+                padding: 3px 15px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .btn-editar {
+                background-color: #e6f0ff;
+                border: 1px solid #0055cc;
+                color: #0055cc;
+                font-size: 11px;
+                cursor: pointer;
+                margin-right: 5px;
             }
             .btn-deletar {
                 background-color: #ffffff;
@@ -61,6 +78,13 @@
                 color: #ff0000;
                 font-size: 11px;
                 cursor: pointer;
+            }
+            .aviso-edicao {
+                background-color: #ffffcc;
+                padding: 5px;
+                border: 1px solid #cccc00;
+                margin-bottom: 10px;
+                font-size: 13px;
             }
             .aviso-erro { color: #cc0000; font-weight: bold; }
             .aviso-ok { color: #008800; font-weight: bold; }
@@ -71,12 +95,21 @@
         <h:link outcome="index" value="[ Voltar ao Menu Principal ]" styleClass="link-menu" />
         <br/><br/>
 
-        <h2>Controle de Estoque</h2>
+        <h2>
+            <h:outputText value="#{empty equipamentoController.equipamento.id or equipamentoController.equipamento.id == 0 ? 'Controle de Estoque - Novo Cadastro' : 'Controle de Estoque - Edição'}" />
+        </h2>
         
         <h:messages globalOnly="true" errorClass="aviso-erro" infoClass="aviso-ok" />
 
         <div class="quadro-formulario">
             <h:form id="formEquipamento">
+                
+                <h:panelGroup rendered="#{not empty equipamentoController.equipamento.id and equipamentoController.equipamento.id != 0}">
+                    <div class="aviso-edicao">
+                        <strong>Atenção:</strong> Editando o Equipamento Cód: #{equipamentoController.equipamento.id}
+                    </div>
+                </h:panelGroup>
+
                 <div class="campo">
                     <h:outputLabel value="Descrição do Item:" /><br/>
                     <h:inputText value="#{equipamentoController.equipamento.descricao}" required="true" requiredMessage="Faltou a descrição." size="40" />
@@ -93,12 +126,27 @@
                 </div>
                 
                 <div class="campo">
-                    <h:outputLabel value="Qtd. Comprada:" /><br/>
+                    <h:outputLabel value="Qtd. Comprada (Total):" /><br/>
                     <h:inputText value="#{equipamentoController.equipamento.quantidadeTotal}" required="true" size="5" />
                 </div>
                 
-                <div class="campo">
-                    <h:commandButton value="Cadastrar no Estoque" action="#{equipamentoController.salvar}" styleClass="btn-gravar" />
+                <h:panelGroup rendered="#{not empty equipamentoController.equipamento.id and equipamentoController.equipamento.id != 0}">
+                    <div class="campo">
+                        <h:outputLabel value="Qtd. Em Uso (Ajuste Manual):" /><br/>
+                        <h:inputText value="#{equipamentoController.equipamento.quantidadeEmUso}" size="5" />
+                    </div>
+                </h:panelGroup>
+                
+                <div class="campo" style="margin-top: 15px;">
+                    <h:commandButton value="#{empty equipamentoController.equipamento.id or equipamentoController.equipamento.id == 0 ? 'Cadastrar no Estoque' : 'Atualizar Equipamento'}" 
+                                     action="#{equipamentoController.salvar}" 
+                                     styleClass="btn-gravar" />
+                                     
+                    <h:commandButton value="Cancelar Edição" 
+                                     action="#{equipamentoController.cancelarEdicao}" 
+                                     styleClass="btn-cancelar-edicao" 
+                                     rendered="#{not empty equipamentoController.equipamento.id and equipamentoController.equipamento.id != 0}" 
+                                     immediate="true" />
                 </div>
             </h:form>
         </div>
@@ -136,11 +184,15 @@
                 
                 <h:column>
                     <f:facet name="header">Livre</f:facet>
-                    <strong><h:outputText value="#{e.quantidadeTotal - e.quantidadeEmUso}" /></strong>
+                    <strong><h:outputText value="#{e.quantidadeDisponivel}" /></strong>
                 </h:column>
                 
                 <h:column>
                     <f:facet name="header">Opções</f:facet>
+                    <h:commandButton value="editar" 
+                                     action="#{equipamentoController.prepararEdicao(e)}" 
+                                     styleClass="btn-editar" />
+                                     
                     <h:commandButton value="remover" 
                                      action="#{equipamentoController.excluir(e)}" 
                                      styleClass="btn-deletar"
